@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>南阳市电子围栏查询</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                "Microsoft YaHei",
+                sans-serif;
+            background: #f5f7fa;
+        }
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            padding: 16px;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            z-index: 10;
+        }
+
+        .title {
+            margin: 0 0 12px 0;
+            font-size: 20px;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+        }
+
+        #addressInput {
+            flex: 1;
+            height: 42px;
+            padding: 0 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        #searchButton {
+            width: 100px;
+            border: none;
+            border-radius: 6px;
+            background: #1677ff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #searchButton:hover {
+            background: #4096ff;
+        }
+
+        #searchButton:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+
+        .main {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+
+        #map {
+            flex: 1;
+        }
+
+        .panel {
+            width: 340px;
+            padding: 20px;
+            background: white;
+            border-left: 1px solid #ddd;
+            overflow-y: auto;
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            font-size: 18px;
+        }
+
+        .status {
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            color: #666;
+        }
+
+        .result {
+            margin-top: 20px;
+        }
+
+        .result-item {
+            margin-bottom: 14px;
+        }
+
+        .label {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .value {
+            margin-top: 4px;
+            font-size: 16px;
+            color: #222;
+            word-break: break-all;
+        }
+
+        .success {
+            color: #16a34a;
+        }
+
+        .error {
+            color: #dc2626;
+        }
+
+        @media (max-width: 768px) {
+            .main {
+                flex-direction: column;
+            }
+
+            #map {
+                min-height: 60vh;
+            }
+
+            .panel {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <div class="header">
+
+        <h1 class="title">
+            南阳市电子围栏查询
+        </h1>
+
+        <div class="search-bar">
+
+            <input
+                id="addressInput"
+                type="text"
+                placeholder="请输入卧龙区或宛城区地址"
+            >
+
+            <button id="searchButton">
+                查询
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="main">
+
+        <div id="map"></div>
+
+        <div class="panel">
+
+            <h2>查询结果</h2>
+
+            <div
+                id="status"
+                class="status"
+            >
+                正在加载电子围栏数据...
+            </div>
+
+            <div
+                id="result"
+                class="result"
+            ></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!--
+    高德地图 Web JS API
+
+    使用你的 Web JS API Key
+
+    同时加载 Geocoder 插件
+-->
+
+  <script>
+    window._AMapSecurityConfig = {
+      securityJsCode: "d29574a5ca54c6d994acdff66d4153a1"
+    };
+  </script>
+<script
+    src="https://webapi.amap.com/maps?v=2.0&key=385c6054d297c3f73d3efdabd0381dc4&plugin=AMap.Geocoder">
+</script>
+
+
+
+
+<script>
+
+/* =========================================================
+   配置
+========================================================= */
+
+const CITY_CODE = "411300";
+
+const CITY_NAME = "南阳市";
+
+const FENCE_DATA_URL = "./fences.json";
+
+
+/* =========================================================
+   全局变量
+========================================================= */
+
+let map;
+
+let fences = [];
+
+let searchMarker = null;
+
+let selectedPolygon = null;
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const addressInput =
+    document.getElementById("addressInput");
+
+const searchButton =
+    document.getElementById("searchButton");
+
+const statusElement =
+    document.getElementById("status");
+
+const resultElement =
+    document.getElementById("result");
+
+
+/* =========================================================
+   初始化地图
+========================================================= */
+
+function initMap() {
+
+    map = new AMap.Map(
+        "map",
+        {
+            zoom: 12,
+
+            center: [
+                112.5283,
+                32.9908
+            ]
+        }
+    );
+
+}
+
+
+/* =========================================================
+   加载电子围栏
+========================================================= */
+
+async function loadFences() {
+
+    try {
+
+        setStatus("正在加载电子围栏数据...");
+
+        const response =
+            await fetch(FENCE_DATA_URL);
+
+        if (!response.ok) {
+
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+
+        }
+
+        const data =
+            await response.json();
+
+        fences =
+            data.fences || [];
+
+        console.log(
+            "电子围栏数量：",
+            fences.length
+        );
+
+        drawAllFences();
+
+        setStatus(
+            `已加载 ${fences.length} 个电子围栏`
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "电子围栏加载失败：",
+            error
+        );
+
+        setStatus(
+            "电子围栏加载失败：" +
+            error.message,
+            "error"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   绘制全部围栏
+========================================================= */
+
+function drawAllFences() {
+
+    for (const fence of fences) {
+
+        const geometry =
+            fence.geometry;
+
+        if (!geometry) {
+            continue;
+        }
+
+        if (
+            geometry.type === "Polygon"
+        ) {
+
+            drawPolygon(
+                geometry.coordinates,
+                fence
+            );
+
+        }
+
+        else if (
+            geometry.type === "MultiPolygon"
+        ) {
+
+            drawMultiPolygon(
+                geometry.coordinates,
+                fence
+            );
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   绘制 Polygon
+========================================================= */
+
+function drawPolygon(
+    coordinates,
+    fence
+) {
+
+    if (
+        !coordinates ||
+        coordinates.length === 0
+    ) {
+        return;
+    }
+
+    /*
+        你的 GeoJSON Polygon 格式：
+
+        [
+            外环,
+            内洞1,
+            内洞2
+        ]
+    */
+
+    const polygon =
+        new AMap.Polygon({
+
+            path: coordinates,
+
+            strokeColor: "#1677ff",
+
+            strokeWeight: 1,
+
+            strokeOpacity: 0.8,
+
+            fillColor: "#1677ff",
+
+            fillOpacity: 0.08,
+
+            extData: fence
+
+        });
+
+
+    /*
+        点击围栏查看信息
+    */
+
+    polygon.on(
+        "click",
+        function () {
+
+            const clickedFence =
+                polygon.getExtData();
+
+            showClickedFence(
+                clickedFence
+            );
+
+        }
+    );
+
+
+    map.add(polygon);
+
+}
+
+
+/* =========================================================
+   绘制 MultiPolygon
+========================================================= */
+
+function drawMultiPolygon(
+    coordinates,
+    fence
+) {
+
+    for (
+        const polygonCoordinates
+        of coordinates
+    ) {
+
+        drawPolygon(
+            polygonCoordinates,
+            fence
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   地址查询
+========================================================= */
+
+async function searchAddress() {
+
+    const address =
+        addressInput
+            .value
+            .trim();
+
+
+    if (!address) {
+
+        setStatus(
+            "请输入地址",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if (fences.length === 0) {
+
+        setStatus(
+            "电子围栏数据尚未加载完成",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        searchButton.disabled = true;
+
+        setStatus(
+            "正在解析地址..."
+        );
+
+        resultElement.innerHTML = "";
+
+
+        /*
+            中文地址
+                ↓
+            高德 Geocoder
+                ↓
+            GCJ-02
+        */
+
+        const location =
+            await geocodeAddress(address);
+
+
+        console.log(
+            "地址解析结果：",
+            location
+        );
+
+
+        /*
+            地图显示 Marker
+        */
+
+        showSearchMarker(
+            location.lng,
+            location.lat
+        );
+
+
+        /*
+            查询电子围栏
+        */
+
+        const fence =
+            findFence(
+                location.lng,
+                location.lat
+            );
+
+
+        if (fence) {
+
+            showFenceResult(
+                address,
+                location,
+                fence
+            );
+
+            setStatus(
+                "查询成功",
+                "success"
+            );
+
+        }
+
+        else {
+
+            showNotFoundResult(
+                address,
+                location
+            );
+
+            setStatus(
+                "该地址未找到对应电子围栏",
+                "error"
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "查询失败：",
+            error
+        );
+
+        setStatus(
+            error.message,
+            "error"
+        );
+
+    }
+
+    finally {
+
+        searchButton.disabled = false;
+
+    }
+
+}
+
+
+/* =========================================================
+   高德 Geocoder
+
+   中文地址
+       ↓
+   GCJ-02
+========================================================= */
+
+function geocodeAddress(address) {
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const geocoder =
+                new AMap.Geocoder({
+
+                    city: CITY_CODE
+
+                });
+
+
+            /*
+                用户输入：
+
+                新华城市广场
+
+                最终查询：
+
+                南阳市新华城市广场
+            */
+
+            const fullAddress =
+                `${CITY_NAME}${address}`;
+
+
+            console.log(
+                "正在解析地址：",
+                fullAddress
+            );
+
+
+            geocoder.getLocation(
+
+                fullAddress,
+
+                function (
+                    status,
+                    result
+                ) {
+
+                    console.log(
+                        "Geocoder status：",
+                        status
+                    );
+
+                    console.log(
+                        "Geocoder result：",
+                        result
+                    );
+
+
+                    if (
+                        status === "complete" &&
+                        result.info === "OK" &&
+                        result.geocodes &&
+                        result.geocodes.length > 0
+                    ) {
+
+                        const geocode =
+                            result.geocodes[0];
+
+
+                        resolve({
+
+                            lng:
+                                geocode.location.lng,
+
+                            lat:
+                                geocode.location.lat,
+
+                            formattedAddress:
+                                geocode.formattedAddress
+                                ||
+                                fullAddress,
+
+                            district:
+                                geocode
+                                    .addressComponent
+                                    ?.district
+                                ||
+                                "",
+
+                            level:
+                                geocode.level
+                                ||
+                                ""
+
+                        });
+
+                    }
+
+                    else {
+
+                        reject(
+
+                            new Error(
+
+                                "地址解析失败：" +
+
+                                (
+                                    result?.info
+                                    ||
+                                    status
+                                )
+
+                            )
+
+                        );
+
+                    }
+
+                }
+
+            );
+
+        }
+
+    );
+
+}
+
+
+/* =========================================================
+   查找电子围栏
+========================================================= */
+
+function findFence(
+    lng,
+    lat
+) {
+
+    const point = [
+        lng,
+        lat
+    ];
+
+
+    console.log(
+        "查询坐标：",
+        point
+    );
+
+
+    for (
+        const fence
+        of fences
+    ) {
+
+        if (
+            isPointInGeometry(
+                point,
+                fence.geometry
+            )
+        ) {
+
+            console.log(
+                "找到围栏：",
+                fence
+            );
+
+            return fence;
+
+        }
+
+    }
+
+
+    console.log(
+        "没有找到对应围栏"
+    );
+
+
+    return null;
+
+}
+
+
+/* =========================================================
+   Geometry 判断
+========================================================= */
+
+function isPointInGeometry(
+    point,
+    geometry
+) {
+
+    if (!geometry) {
+        return false;
+    }
+
+
+    if (
+        geometry.type === "Polygon"
+    ) {
+
+        return isPointInPolygon(
+            point,
+            geometry.coordinates
+        );
+
+    }
+
+
+    if (
+        geometry.type === "MultiPolygon"
+    ) {
+
+        for (
+            const polygon
+            of geometry.coordinates
+        ) {
+
+            if (
+                isPointInPolygon(
+                    point,
+                    polygon
+                )
+            ) {
+
+                return true;
+
+            }
+
+        }
+
+    }
+
+
+    return false;
+
+}
+
+
+/* =========================================================
+   Polygon 判断
+========================================================= */
+
+function isPointInPolygon(
+    point,
+    polygonCoordinates
+) {
+
+    if (
+        !polygonCoordinates ||
+        polygonCoordinates.length === 0
+    ) {
+
+        return false;
+
+    }
+
+
+    /*
+        第一个 Ring 是外环
+    */
+
+    const outerRing =
+        polygonCoordinates[0];
+
+
+    if (
+        !isPointInRing(
+            point,
+            outerRing
+        )
+    ) {
+
+        return false;
+
+    }
+
+
+    /*
+        后面的 Ring 是内洞
+    */
+
+    for (
+        let i = 1;
+        i < polygonCoordinates.length;
+        i++
+    ) {
+
+        const hole =
+            polygonCoordinates[i];
+
+
+        if (
+            isPointInRing(
+                point,
+                hole
+            )
+        ) {
+
+            return false;
+
+        }
+
+    }
+
+
+    return true;
+
+}
+
+
+/* =========================================================
+   Point In Ring
+
+   Ray Casting Algorithm
+========================================================= */
+
+function isPointInRing(
+    point,
+    ring
+) {
+
+    const x =
+        point[0];
+
+    const y =
+        point[1];
+
+    let inside = false;
+
+
+    for (
+        let i = 0,
+            j = ring.length - 1;
+
+        i < ring.length;
+
+        j = i++
+    ) {
+
+        const xi =
+            ring[i][0];
+
+        const yi =
+            ring[i][1];
+
+        const xj =
+            ring[j][0];
+
+        const yj =
+            ring[j][1];
+
+
+        const intersect =
+
+            (
+                (yi > y)
+                !==
+                (yj > y)
+            )
+
+            &&
+
+            (
+                x
+                <
+                (
+                    (xj - xi)
+                    *
+                    (y - yi)
+                    /
+                    (yj - yi)
+                    +
+                    xi
+                )
+            );
+
+
+        if (intersect) {
+
+            inside =
+                !inside;
+
+        }
+
+    }
+
+
+    return inside;
+
+}
+
+
+/* =========================================================
+   显示查询 Marker
+========================================================= */
+
+function showSearchMarker(
+    lng,
+    lat
+) {
+
+    if (searchMarker) {
+
+        map.remove(
+            searchMarker
+        );
+
+    }
+
+
+    searchMarker =
+        new AMap.Marker({
+
+            position: [
+                lng,
+                lat
+            ]
+
+        });
+
+
+    map.add(
+        searchMarker
+    );
+
+
+    map.setZoomAndCenter(
+
+        16,
+
+        [
+            lng,
+            lat
+        ]
+
+    );
+
+}
+
+
+/* =========================================================
+   显示查询成功结果
+========================================================= */
+
+function showFenceResult(
+    address,
+    location,
+    fence
+) {
+
+    const couriers =
+        fence.couriers || [];
+
+
+    let courierHtml = "";
+
+
+    if (
+        couriers.length === 0
+    ) {
+
+        courierHtml = `
+
+            <div class="result-item">
+
+                <div class="label">
+                    快递员
+                </div>
+
+                <div class="value">
+                    暂无快递员信息
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    for (
+        const courier
+        of couriers
+    ) {
+
+        courierHtml += `
+
+            <div class="result-item">
+
+                <div class="label">
+                    快递员
+                </div>
+
+                <div class="value">
+                    ${escapeHtml(courier.name)}
+                </div>
+
+            </div>
+
+
+            <div class="result-item">
+
+                <div class="label">
+                    手机号
+                </div>
+
+                <div class="value">
+                    ${escapeHtml(courier.mobile)}
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    resultElement.innerHTML = `
+
+        <div class="result-item">
+
+            <div class="label">
+                查询地址
+            </div>
+
+            <div class="value">
+                ${escapeHtml(address)}
+            </div>
+
+        </div>
+
+
+        <div class="result-item">
+
+            <div class="label">
+                标准地址
+            </div>
+
+            <div class="value">
+
+                ${escapeHtml(
+                    location.formattedAddress
+                )}
+
+            </div>
+
+        </div>
+
+
+        <div class="result-item">
+
+            <div class="label">
+                GCJ-02 坐标
+            </div>
+
+            <div class="value">
+
+                ${location.lng},
+                ${location.lat}
+
+            </div>
+
+        </div>
+
+
+        <div class="result-item">
+
+            <div class="label">
+                电子围栏
+            </div>
+
+            <div class="value success">
+
+                ${escapeHtml(
+                    fence.fenceName
+                )}
+
+            </div>
+
+        </div>
+
+
+        ${courierHtml}
+
+    `;
+
+}
+
+
+/* =========================================================
+   点击围栏显示信息
+========================================================= */
+
+function showClickedFence(fence) {
+
+    const couriers =
+        fence.couriers || [];
+
+
+    let courierHtml = "";
+
+
+    for (
+        const courier
+        of couriers
+    ) {
+
+        courierHtml += `
+
+            <div class="result-item">
+
+                <div class="label">
+                    快递员
+                </div>
+
+                <div class="value">
+                    ${escapeHtml(courier.name)}
+                </div>
+
+            </div>
+
+
+            <div class="result-item">
+
+                <div class="label">
+                    手机号
+                </div>
+
+                <div class="value">
+                    ${escapeHtml(courier.mobile)}
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    resultElement.innerHTML = `
+
+        <div class="result-item">
+
+            <div class="label">
+                电子围栏
+            </div>
+
+            <div class="value success">
+
+                ${escapeHtml(
+                    fence.fenceName
+                )}
+
+            </div>
+
+        </div>
+
+
+        <div class="result-item">
+
+            <div class="label">
+                Fence ID
+            </div>
+
+            <div class="value">
+
+                ${escapeHtml(
+                    fence.fenceId
+                )}
+
+            </div>
+
+        </div>
+
+
+        ${courierHtml}
+
+    `;
+
+
+    setStatus(
+        "已选择电子围栏",
+        "success"
+    );
+
+}
+
+
+/* =========================================================
+   未找到围栏
+========================================================= */
+
+function showNotFoundResult(
+    address,
+    location
+) {
+
+    resultElement.innerHTML = `
+
+        <div class="result-item">
+
+            <div class="label">
+                查询地址
+            </div>
+
+            <div class="value">
+                ${escapeHtml(address)}
+            </div>
+
+        </div>
+
+
+        <div class="result-item">
+
+            <div class="label">
+                标准地址
+            </div>
+
+            <div class="value">
+
+                ${escapeHtml(
+                    location.formattedAddress
+                )}
+
+            </div>
+
+        </div>
+
+
+        <div class="result-item">
+
+            <div class="label">
+                GCJ-02 坐标
+            </div>
+
+            <div class="value">
+
+                ${location.lng},
+                ${location.lat}
+
+            </div>
+
+        </div>
+
+
+        <div class="result-item">
+
+            <div class="value error">
+                未找到对应电子围栏
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   状态
+========================================================= */
+
+function setStatus(
+    message,
+    type = ""
+) {
+
+    statusElement.textContent =
+        message;
+
+    statusElement.className =
+        "status";
+
+    if (type) {
+
+        statusElement
+            .classList
+            .add(type);
+
+    }
+
+}
+
+
+/* =========================================================
+   HTML Escape
+========================================================= */
+
+function escapeHtml(value) {
+
+    return String(
+        value ?? ""
+    )
+
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
+}
+
+
+/* =========================================================
+   事件
+========================================================= */
+
+searchButton.addEventListener(
+    "click",
+    searchAddress
+);
+
+
+addressInput.addEventListener(
+
+    "keydown",
+
+    event => {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            searchAddress();
+
+        }
+
+    }
+
+);
+
+
+/* =========================================================
+   启动
+========================================================= */
+
+initMap();
+
+loadFences();
+
+</script>
+
+</body>
+</html>
