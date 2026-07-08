@@ -2,6 +2,34 @@
     'use strict';
 
     /* =========================================================
+        FenceUI namespace  —  shared state & tab system
+    ========================================================= */
+
+    window.FenceUI = window.FenceUI || {};
+
+    var tabRegistry  = {};
+    var currentTab   = 'address';
+
+    window.FenceUI.getMap     = function () { return map; };
+    window.FenceUI.getFences  = function () { return fences; };
+
+    window.FenceUI.registerTab = function (name, callbacks) {
+        tabRegistry[name] = callbacks;
+    };
+
+    window.FenceUI.switchTab = function (name) {
+        if (name === currentTab) return;
+
+        var prev = tabRegistry[currentTab];
+        if (prev && prev.deactivate) prev.deactivate();
+
+        currentTab = name;
+
+        var next = tabRegistry[name];
+        if (next && next.activate) next.activate();
+    };
+
+    /* =========================================================
         Config
     ========================================================= */
 
@@ -329,6 +357,53 @@
 
     $address.addEventListener('keydown', function (event) {
         if (event.key === 'Enter') searchAddress();
+    });
+
+
+    /* =========================================================
+        Tabs
+    ========================================================= */
+
+    var $tabs = document.querySelectorAll('.search-tab');
+
+    for (var i = 0; i < $tabs.length; i++) {
+        $tabs[i].addEventListener('click', function () {
+            var name = this.getAttribute('data-tab');
+            if (!name) return;
+
+            for (var j = 0; j < $tabs.length; j++) {
+                $tabs[j].classList.remove('active');
+            }
+            this.classList.add('active');
+
+            var $panels = document.querySelectorAll('.search-panel');
+            for (var k = 0; k < $panels.length; k++) {
+                $panels[k].classList.remove('active');
+            }
+            var $panel = document.getElementById('searchPanel' +
+                name.charAt(0).toUpperCase() + name.slice(1));
+            if ($panel) $panel.classList.add('active');
+
+            window.FenceUI.switchTab(name);
+        });
+    }
+
+    window.FenceUI.registerTab('address', {
+        activate: function () {
+            if ($address) $address.value = '';
+            if ($result) $result.innerHTML = '';
+            if ($status) {
+                $status.textContent = '已加载 ' + fences.length + ' 个电子围栏';
+                $status.className = 'status';
+            }
+        },
+        deactivate: function () {
+            if (searchMarker) {
+                map.remove(searchMarker);
+                searchMarker = null;
+            }
+            if ($result) $result.innerHTML = '';
+        }
     });
 
 

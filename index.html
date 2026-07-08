@@ -40,6 +40,48 @@
             font-size: 20px;
         }
 
+        .search-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 10px;
+        }
+
+        .search-tab {
+            padding: 8px 20px;
+            border: 1px solid #ddd;
+            background: #f5f5f5;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .search-tab:first-child {
+            border-radius: 6px 0 0 6px;
+        }
+
+        .search-tab:last-child {
+            border-radius: 0 6px 6px 0;
+        }
+
+        .search-tab.active {
+            background: #1677ff;
+            color: white;
+            border-color: #1677ff;
+        }
+
+        .search-tab:hover:not(.active) {
+            background: #e8e8e8;
+        }
+
+        .search-panel {
+            display: none;
+        }
+
+        .search-panel.active {
+            display: block;
+        }
+
         .search-bar {
             display: flex;
             gap: 10px;
@@ -71,6 +113,29 @@
         #searchButton:disabled {
             background: #999;
             cursor: not-allowed;
+        }
+
+        #courierInput {
+            flex: 1;
+            height: 42px;
+            padding: 0 14px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        #courierSearchButton {
+            width: 100px;
+            border: none;
+            border-radius: 6px;
+            background: #1677ff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #courierSearchButton:hover {
+            background: #4096ff;
         }
 
         .main {
@@ -131,6 +196,90 @@
             color: #dc2626;
         }
 
+        .courier-result {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .result-section {
+            margin-bottom: 4px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .courier-card {
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .courier-card.target {
+            background: #fef2f2;
+            border-left: 3px solid #dc2626;
+        }
+
+        .courier-card.adjacent {
+            background: #fffbeb;
+            border-left: 3px solid #f59e0b;
+        }
+
+        .courier-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #222;
+        }
+
+        .courier-phone {
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .courier-fence {
+            color: #888;
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        .courier-fence-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 1px 8px;
+            background: #f59e0b;
+            color: white;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: normal;
+        }
+
+        .courier-list {
+            margin-top: 6px;
+            padding-left: 8px;
+        }
+
+        .courier-item {
+            padding: 3px 0;
+            font-size: 13px;
+            color: #444;
+        }
+
+        .courier-item .phone {
+            color: #999;
+            font-size: 12px;
+        }
+
         @media (max-width: 768px) {
             .main {
                 flex-direction: column;
@@ -159,18 +308,35 @@
             南阳市电子围栏查询
         </h1>
 
-        <div class="search-bar">
+        <div class="search-tabs">
+            <button class="search-tab active" data-tab="address">地址查询</button>
+            <button class="search-tab" data-tab="courier">快递员搜索</button>
+        </div>
 
-            <input
-                id="addressInput"
-                type="text"
-                placeholder="请输入卧龙区或宛城区地址"
-            >
+        <div class="search-panel active" id="searchPanelAddress">
+            <div class="search-bar">
+                <input
+                    id="addressInput"
+                    type="text"
+                    placeholder="请输入卧龙区或宛城区地址"
+                >
+                <button id="searchButton">
+                    查询
+                </button>
+            </div>
+        </div>
 
-            <button id="searchButton">
-                查询
-            </button>
-
+        <div class="search-panel" id="searchPanelCourier">
+            <div class="search-bar">
+                <input
+                    id="courierInput"
+                    type="text"
+                    placeholder="请输入快递员姓名（支持模糊搜索）"
+                >
+                <button id="courierSearchButton">
+                    搜索
+                </button>
+            </div>
         </div>
 
     </div>
@@ -222,6 +388,7 @@
 
 <script src="./core/spatial.js"></script>
 <script src="./ui/render.js"></script>
+<script src="./dispatch/courier-search.js"></script>
 
 </body>
 </html>
