@@ -1,0 +1,9 @@
+{
+    "name": "courier-fence",
+    "version": "1.0.0",
+    "private": true,
+    "description": "快递员查询工具 - 基于高德地图与电子围栏",
+    "scripts": {
+        "build": "node build/build.js"
+    }
+}

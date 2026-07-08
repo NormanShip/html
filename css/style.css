@@ -1,0 +1,415 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: #f5f7fa;
+}
+
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.header {
+    padding: 16px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+    z-index: 10;
+}
+
+.title {
+    margin: 0 0 12px 0;
+    font-size: 20px;
+}
+
+/* ========== Tabs ========== */
+
+.search-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 10px;
+}
+
+.search-tab {
+    padding: 8px 20px;
+    border: 1px solid #ddd;
+    background: #f5f5f5;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+    transition: all 0.2s;
+}
+
+.search-tab:first-child {
+    border-radius: 6px 0 0 6px;
+}
+
+.search-tab:last-child {
+    border-radius: 0 6px 6px 0;
+}
+
+.search-tab.active {
+    background: #1677ff;
+    color: white;
+    border-color: #1677ff;
+}
+
+.search-tab:hover:not(.active) {
+    background: #e8e8e8;
+}
+
+/* ========== Search Panels ========== */
+
+.search-panel {
+    display: none;
+}
+
+.search-panel.active {
+    display: block;
+}
+
+.search-bar {
+    display: flex;
+    gap: 10px;
+}
+
+.search-bar input {
+    flex: 1;
+    height: 42px;
+    padding: 0 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+}
+
+.search-bar button {
+    width: 100px;
+    border: none;
+    border-radius: 6px;
+    background: #1677ff;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.search-bar button:hover {
+    background: #4096ff;
+}
+
+.search-bar button:disabled {
+    background: #999;
+    cursor: not-allowed;
+}
+
+/* ========== Main Layout ========== */
+
+.main {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+#map {
+    flex: 1;
+}
+
+.panel {
+    width: 360px;
+    padding: 20px;
+    background: white;
+    border-left: 1px solid #ddd;
+    overflow-y: auto;
+}
+
+.panel h2 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    color: #333;
+}
+
+/* ========== Status ========== */
+
+.status {
+    padding: 12px;
+    background: #f0f5ff;
+    border-radius: 6px;
+    color: #1677ff;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.status.success { background: #f0fdf4; color: #16a34a; }
+.status.error   { background: #fef2f2; color: #dc2626; }
+
+/* ========== POI Candidates ========== */
+
+.poi-candidates {
+    margin-bottom: 16px;
+}
+
+.poi-item {
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.poi-item:hover {
+    border-color: #1677ff;
+    background: #f0f5ff;
+}
+
+.poi-item.selected {
+    border-color: #1677ff;
+    background: #e6f0ff;
+    box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.2);
+}
+
+.poi-radio {
+    margin-top: 2px;
+    accent-color: #1677ff;
+}
+
+.poi-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.poi-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 4px;
+}
+
+.poi-address {
+    font-size: 13px;
+    color: #888;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.poi-type {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 2px;
+}
+
+.poi-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.poi-confirm-btn {
+    flex: 1;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    background: #1677ff;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.poi-confirm-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.poi-confirm-btn:hover:not(:disabled) {
+    background: #4096ff;
+}
+
+/* ========== Result Section ========== */
+
+.result {
+    margin-bottom: 16px;
+}
+
+.result-section {
+    margin-bottom: 16px;
+}
+
+.section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #999;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #eee;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.result-item {
+    margin-bottom: 10px;
+}
+
+.label {
+    font-size: 13px;
+    color: #999;
+}
+
+.value {
+    margin-top: 2px;
+    font-size: 15px;
+    color: #222;
+    word-break: break-all;
+}
+
+.value.success { color: #16a34a; }
+.value.error   { color: #dc2626; }
+
+/* ========== Nearby POI ========== */
+
+.nearby {
+    border-top: 1px solid #eee;
+    padding-top: 12px;
+}
+
+.nearby-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.nearby-item:last-child {
+    border-bottom: none;
+}
+
+.nearby-name {
+    font-size: 14px;
+    color: #333;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nearby-distance {
+    font-size: 13px;
+    color: #999;
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+/* ========== Courier Cards ========== */
+
+.courier-result {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.courier-card {
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.courier-card.target {
+    background: #fef2f2;
+    border-left: 3px solid #dc2626;
+}
+
+.courier-card.adjacent {
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+}
+
+.courier-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #222;
+}
+
+.courier-phone {
+    color: #666;
+    margin-top: 2px;
+}
+
+.courier-fence {
+    color: #888;
+    font-size: 13px;
+    margin-top: 2px;
+}
+
+.courier-fence-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.badge {
+    display: inline-block;
+    padding: 1px 8px;
+    background: #f59e0b;
+    color: white;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: normal;
+}
+
+.courier-list {
+    margin-top: 6px;
+    padding-left: 8px;
+}
+
+.courier-item {
+    padding: 3px 0;
+    font-size: 13px;
+    color: #444;
+}
+
+.courier-item .phone {
+    color: #999;
+    font-size: 12px;
+}
+
+/* ========== Fence detail card ========== */
+
+.fence-card {
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: #f0fdf4;
+    border-left: 3px solid #16a34a;
+    margin-bottom: 8px;
+}
+
+.fence-card .fence-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #222;
+}
+
+/* ========== Responsive ========== */
+
+@media (max-width: 768px) {
+    .main {
+        flex-direction: column;
+    }
+
+    #map {
+        min-height: 55vh;
+    }
+
+    .panel {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid #ddd;
+    }
+}

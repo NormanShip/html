@@ -3,344 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>南阳市电子围栏查询</title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family:
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                "Microsoft YaHei",
-                sans-serif;
-            background: #f5f7fa;
-        }
-
-        .app {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-
-        .header {
-            padding: 16px;
-            background: white;
-            border-bottom: 1px solid #ddd;
-            z-index: 10;
-        }
-
-        .title {
-            margin: 0 0 12px 0;
-            font-size: 20px;
-        }
-
-        .search-tabs {
-            display: flex;
-            gap: 0;
-            margin-bottom: 10px;
-        }
-
-        .search-tab {
-            padding: 8px 20px;
-            border: 1px solid #ddd;
-            background: #f5f5f5;
-            cursor: pointer;
-            font-size: 14px;
-            color: #666;
-            transition: all 0.2s;
-        }
-
-        .search-tab:first-child {
-            border-radius: 6px 0 0 6px;
-        }
-
-        .search-tab:last-child {
-            border-radius: 0 6px 6px 0;
-        }
-
-        .search-tab.active {
-            background: #1677ff;
-            color: white;
-            border-color: #1677ff;
-        }
-
-        .search-tab:hover:not(.active) {
-            background: #e8e8e8;
-        }
-
-        .search-panel {
-            display: none;
-        }
-
-        .search-panel.active {
-            display: block;
-        }
-
-        .search-bar {
-            display: flex;
-            gap: 10px;
-        }
-
-        #addressInput {
-            flex: 1;
-            height: 42px;
-            padding: 0 14px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 16px;
-        }
-
-        #searchButton {
-            width: 100px;
-            border: none;
-            border-radius: 6px;
-            background: #1677ff;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        #searchButton:hover {
-            background: #4096ff;
-        }
-
-        #searchButton:disabled {
-            background: #999;
-            cursor: not-allowed;
-        }
-
-        #courierInput {
-            flex: 1;
-            height: 42px;
-            padding: 0 14px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 16px;
-        }
-
-        #courierSearchButton {
-            width: 100px;
-            border: none;
-            border-radius: 6px;
-            background: #1677ff;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        #courierSearchButton:hover {
-            background: #4096ff;
-        }
-
-        .main {
-            display: flex;
-            flex: 1;
-            min-height: 0;
-        }
-
-        #map {
-            flex: 1;
-        }
-
-        .panel {
-            width: 340px;
-            padding: 20px;
-            background: white;
-            border-left: 1px solid #ddd;
-            overflow-y: auto;
-        }
-
-        .panel h2 {
-            margin-top: 0;
-            font-size: 18px;
-        }
-
-        .status {
-            padding: 12px;
-            background: #f5f5f5;
-            border-radius: 6px;
-            color: #666;
-        }
-
-        .result {
-            margin-top: 20px;
-        }
-
-        .result-item {
-            margin-bottom: 14px;
-        }
-
-        .label {
-            font-size: 13px;
-            color: #999;
-        }
-
-        .value {
-            margin-top: 4px;
-            font-size: 16px;
-            color: #222;
-            word-break: break-all;
-        }
-
-        .success {
-            color: #16a34a;
-        }
-
-        .error {
-            color: #dc2626;
-        }
-
-        .courier-result {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .result-section {
-            margin-bottom: 4px;
-        }
-
-        .section-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #555;
-            margin-bottom: 10px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .courier-card {
-            padding: 10px 12px;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .courier-card.target {
-            background: #fef2f2;
-            border-left: 3px solid #dc2626;
-        }
-
-        .courier-card.adjacent {
-            background: #fffbeb;
-            border-left: 3px solid #f59e0b;
-        }
-
-        .courier-name {
-            font-size: 16px;
-            font-weight: 600;
-            color: #222;
-        }
-
-        .courier-phone {
-            color: #666;
-            margin-top: 2px;
-        }
-
-        .courier-fence {
-            color: #888;
-            font-size: 13px;
-            margin-top: 2px;
-        }
-
-        .courier-fence-name {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 1px 8px;
-            background: #f59e0b;
-            color: white;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: normal;
-        }
-
-        .courier-list {
-            margin-top: 6px;
-            padding-left: 8px;
-        }
-
-        .courier-item {
-            padding: 3px 0;
-            font-size: 13px;
-            color: #444;
-        }
-
-        .courier-item .phone {
-            color: #999;
-            font-size: 12px;
-        }
-
-        @media (max-width: 768px) {
-            .main {
-                flex-direction: column;
-            }
-
-            #map {
-                min-height: 60vh;
-            }
-
-            .panel {
-                width: 100%;
-                border-left: none;
-                border-top: 1px solid #ddd;
-            }
-        }
-    </style>
+    <title>快递员查询工具</title>
+    <link rel="stylesheet" href="./css/style.css">
 </head>
-
 <body>
 
 <div class="app">
 
     <div class="header">
 
-        <h1 class="title">
-            南阳市电子围栏查询
-        </h1>
+        <h1 class="title">快递员查询工具</h1>
 
         <div class="search-tabs">
-            <button class="search-tab active" data-tab="address">地址查询</button>
+            <button class="search-tab active" data-tab="poi">地点搜索</button>
+            <button class="search-tab" data-tab="address">地址解析</button>
             <button class="search-tab" data-tab="courier">快递员搜索</button>
         </div>
 
-        <div class="search-panel active" id="searchPanelAddress">
+        <div class="search-panel active" id="searchPanelPoi">
             <div class="search-bar">
-                <input
-                    id="addressInput"
-                    type="text"
-                    placeholder="请输入卧龙区或宛城区地址"
-                >
-                <button id="searchButton">
-                    查询
-                </button>
+                <input id="poiInput" type="text" placeholder="输入地点名称，如：永诚商厦">
+                <button id="poiSearchBtn">搜索</button>
+            </div>
+        </div>
+
+        <div class="search-panel" id="searchPanelAddress">
+            <div class="search-bar">
+                <input id="addressInput" type="text" placeholder="输入详细地址，如：卧龙区XX路123号">
+                <button id="addressSearchBtn">解析</button>
             </div>
         </div>
 
         <div class="search-panel" id="searchPanelCourier">
             <div class="search-bar">
-                <input
-                    id="courierInput"
-                    type="text"
-                    placeholder="请输入快递员姓名（支持模糊搜索）"
-                >
-                <button id="courierSearchButton">
-                    搜索
-                </button>
+                <input id="courierInput" type="text" placeholder="输入快递员姓名（支持模糊搜索）">
+                <button id="courierSearchButton">搜索</button>
             </div>
         </div>
 
     </div>
-
 
     <div class="main">
 
@@ -348,19 +49,18 @@
 
         <div class="panel">
 
-            <h2>查询结果</h2>
+            <div id="status" class="status">正在加载...</div>
 
-            <div
-                id="status"
-                class="status"
-            >
-                正在加载电子围栏数据...
+            <div id="poiCandidates" class="poi-candidates" style="display:none">
+                <h2>候选位置</h2>
+                <div id="poiList"></div>
             </div>
 
-            <div
-                id="result"
-                class="result"
-            ></div>
+            <div id="result" class="result"></div>
+
+            <div id="nearby" class="nearby" style="display:none">
+                <div id="nearbyList"></div>
+            </div>
 
         </div>
 
@@ -368,27 +68,19 @@
 
 </div>
 
-
-<!--
-    高德地图 Web JS API
-
-    使用你的 Web JS API Key
-
-    同时加载 Geocoder 插件
--->
-
-  <script>
+<!-- AMap JS API -->
+<script>
     window._AMapSecurityConfig = {
-      securityJsCode: "d29574a5ca54c6d994acdff66d4153a1"
+        securityJsCode: "d29574a5ca54c6d994acdff66d4153a1"
     };
-  </script>
-<script
-    src="https://webapi.amap.com/maps?v=2.0&key=385c6054d297c3f73d3efdabd0381dc4&plugin=AMap.Geocoder">
 </script>
+<script src="https://webapi.amap.com/maps?v=2.0&key=385c6054d297c3f73d3efdabd0381dc4&plugin=AMap.Geocoder,AMap.PlaceSearch"></script>
 
-<script src="./core/spatial.js"></script>
-<script src="./ui/render.js"></script>
+<script src="./js/fence.js"></script>
+<script src="./js/amap.js"></script>
+<script src="./js/ui.js"></script>
 <script src="./dispatch/courier-search.js"></script>
+<script src="./js/app.js"></script>
 
 </body>
 </html>
